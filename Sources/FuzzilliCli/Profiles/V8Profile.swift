@@ -25,6 +25,27 @@ fileprivate let ForceV8TurbofanGenerator = CodeGenerator("ForceV8TurbofanGenerat
     }
 }
 
+fileprivate let AimForTypeConfusion = CodeGenerator("AimForTypeConfusion") { b in
+    let f = b.definePlainFunction(withSignature: FunctionSignature(withParameterCount: Int.random(in: 2...5),
+                                                                   hasRestParam: probability(0.5))) { _ in
+        b.generate(n: 5)
+        guard let array = b.randVar(ofType: .jsArray | .jsArrayBuffer) else { return } // typedarrays
+        let idx = b.genIndex()
+        let el = b.loadElement(idx, of: array)
+        b.doReturn(value: el)
+    }
+    
+    let initialArgs = b.generateCallArguments(for: f)
+    let optArgs = b.generateCallArguments(for: f)
+    let triggerArgs = b.generateCallArguments(for: f)
+    
+    b.callFunction(f, withArgs: initialArgs)
+    b.forLoop(b.loadInt(0), .lessThan, b.loadInt(Int64(Int.random(in: 100...20000))), .Add, b.loadInt(1)) { _ in
+        b.callFunction(f, withArgs: optArgs)
+    }
+    b.callFunction(f, withArgs: triggerArgs)
+}
+
 let v8Profile = Profile(
     processArguments: ["--debug-code",
                        "--expose-gc",
@@ -53,12 +74,13 @@ let v8Profile = Profile(
     
     additionalCodeGenerators: WeightedList<CodeGenerator>([
         (ForceV8TurbofanGenerator, 10),
+        (AimForTypeConfusion, 20),
     ]),
        
     disabledCodeGenerators: [],
     
     additionalBuiltins: [
-        "gc"                : .function([] => .undefined),
+        "gc" : .function([] => .undefined),
     ]
 )
 
