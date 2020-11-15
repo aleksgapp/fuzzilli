@@ -116,11 +116,9 @@ public class ProgramBuilder {
         if probability(0.15) && seenIntegers.count >= 2 {
             return chooseUniform(from: seenIntegers)
         } else {
-            return withEqualProbability({
-                chooseUniform(from: self.fuzzer.environment.interestingIntegers)
-            }, {
-                Int64.random(in: -0x100000000...0x100000000)
-            })
+            return withEqualProbability(
+                { chooseUniform(from: self.fuzzer.environment.interestingIntegers) },
+                { Int64.random(in: -0x100000000...0x100000000) })
         }
     }
 
@@ -130,11 +128,10 @@ public class ProgramBuilder {
         var regex = ""
         let desiredLength = Int.random(in: 1...4)
         while regex.count < desiredLength {
-            regex += withEqualProbability({
-                String.random(ofLength: 1)
-            }, {
-                chooseUniform(from: self.fuzzer.environment.interestingRegExps)
-            })
+            regex += withEqualProbability(
+                { String.random(ofLength: 1) },
+                { chooseUniform(from: self.fuzzer.environment.interestingRegExps) }
+            )
         }
 
         // Now optionally concatenate with another regexp
@@ -175,24 +172,18 @@ public class ProgramBuilder {
     /// Generates a random integer for the current program context.
     public func genFloat() -> Double {
         // TODO improve this
-        return withEqualProbability({
-            chooseUniform(from: self.fuzzer.environment.interestingFloats)
-        }, {
-            Double.random(in: -1000000...1000000)
-        })
+        return withEqualProbability(
+            { chooseUniform(from: self.fuzzer.environment.interestingFloats) },
+            { Double.random(in: -1000000...1000000) })
     }
 
     /// Generates a random string value for the current program context.
     public func genString() -> String {
-        return withEqualProbability({
-            self.genPropertyNameForRead()
-        }, {
-            chooseUniform(from: self.fuzzer.environment.interestingStrings)
-        }, {
-            String.random(ofLength: 10)
-        }, {
-            String(chooseUniform(from: self.fuzzer.environment.interestingIntegers))
-        })
+        return withEqualProbability(
+            { self.genPropertyNameForRead() },
+            { chooseUniform(from: self.fuzzer.environment.interestingStrings) },
+            { String.random(ofLength: 10) },
+            { String(chooseUniform(from: self.fuzzer.environment.interestingIntegers)) })
     }
 
     /// Generates a random builtin name for the current program context.
